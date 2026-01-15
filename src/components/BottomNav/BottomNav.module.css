@@ -1,0 +1,93 @@
+.nav {
+    position: fixed;
+    bottom: calc(var(--safe-area-bottom) + var(--space-md));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    z-index: 100;
+    padding: 0 var(--space-md);
+    /* Move up when mini player is visible */
+    transition: bottom var(--duration-normal) var(--ease-out);
+}
+
+/* Adjust for mini player */
+.nav:has(~ .miniPlayerVisible) {
+    bottom: calc(var(--safe-area-bottom) + 80px + var(--space-md));
+}
+
+/* Main pill container */
+.pill {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 28px;
+    padding: 6px 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Nav items */
+.item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 10px 24px;
+    border-radius: 22px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-accent);
+}
+
+.item:not(.active):hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.item:not(.active):active {
+    transform: scale(0.95);
+}
+
+/* Search button - separate circle */
+.searchButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.searchButton.active {
+    background: rgba(60, 60, 60, 0.95);
+    color: white;
+}
+
+.searchButton:not(.active):hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.searchButton:active {
+    transform: scale(0.92);
+}

@@ -1,0 +1,312 @@
+.page {
+  min-height: 100vh;
+  padding: var(--space-md);
+  padding-top: calc(var(--safe-area-top) + var(--space-md));
+  padding-bottom: calc(var(--bottom-nav-height) + var(--mini-player-height) + var(--space-md));
+  background: var(--color-bg-primary);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-accent) 0%, #ff6b8a 100%);
+  border-radius: var(--radius-md);
+  color: white;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.editButton {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.editButton:hover {
+  background: var(--color-bg-secondary);
+}
+
+.editButton.active {
+  background: var(--color-accent);
+  color: white;
+}
+
+.settingsButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.settingsButton:hover {
+  background: var(--color-bg-secondary);
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+/* Import Section */
+.importSection {
+  margin-bottom: var(--space-xl);
+}
+
+.importForm {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: var(--space-sm);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-md) 0 40px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.importButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 48px;
+  padding: 0 var(--space-md);
+  background: var(--color-accent);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+}
+
+.importButton:disabled {
+  opacity: 0.6;
+}
+
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  color: var(--color-accent);
+  font-size: 14px;
+  margin-bottom: var(--space-sm);
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* Section */
+.section {
+  margin-bottom: var(--space-xl);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.editHint {
+  font-size: 13px;
+  color: var(--color-accent);
+}
+
+/* Playlist Grid - Responsive */
+.playlistGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+@media (min-width: 480px) {
+  .playlistGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .playlistGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.playlistCard {
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.playlistCard:active:not(.editMode) {
+  transform: scale(0.97);
+}
+
+.playlistCard.editMode {
+  animation: wiggle 0.3s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+.deleteButton {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: white;
+  border-radius: 50%;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.playlistArtwork {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+  background: var(--color-bg-secondary);
+}
+
+.playlistArtwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholderArtwork {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.playlistTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+.playlistMeta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+}
+
+.emptyIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+  color: var(--color-text-secondary);
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-primary);
+}
+
+.emptyText {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
