@@ -66,9 +66,9 @@ export default function SearchPage() {
     };
 
     const handleResultClick = async (result: SearchResult) => {
-        const url = result.type === "video"
-            ? `https://youtube.com/watch?v=${result.id}`
-            : `https://youtube.com/playlist?list=${result.id}`;
+        // Use videoId if available, otherwise use id
+        const videoId = (result as unknown as { videoId?: string }).videoId || result.id;
+        const url = `https://youtube.com/watch?v=${videoId}`;
 
         try {
             const response = await fetch("/api/import", {
@@ -80,6 +80,8 @@ export default function SearchPage() {
             const data = await response.json();
             if (response.ok) {
                 router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
+            } else {
+                console.error("Import error:", data.error);
             }
         } catch (error) {
             console.error("Import error:", error);
