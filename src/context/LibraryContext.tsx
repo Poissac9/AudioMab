@@ -6,11 +6,13 @@ import { Playlist, Track } from "@/types";
 interface LibraryContextType {
     playlists: Playlist[];
     favorites: Track[];
+    recentlyPlayed: Track[];
     addPlaylist: (playlist: Playlist) => void;
     removePlaylist: (id: string) => void;
     toggleFavorite: (track: Track) => void;
     isFavorite: (trackId: string) => boolean;
     getPlaylist: (id: string) => Playlist | undefined;
+    addToRecentlyPlayed: (track: Track) => void;
     clearAll: () => void;
 }
 
@@ -18,16 +20,20 @@ const LibraryContext = createContext<LibraryContextType | null>(null);
 
 const STORAGE_KEY = "audiomab_library";
 const FAVORITES_KEY = "audiomab_favorites";
+const RECENT_KEY = "audiomab_recent";
+const MAX_RECENT = 50; // Keep last 50 played tracks
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [favorites, setFavorites] = useState<Track[]>([]);
+    const [recentlyPlayed, setRecentlyPlayed] = useState<Track[]>([]);
 
     // Load from localStorage on mount
     useEffect(() => {
         if (typeof window !== "undefined") {
             const savedPlaylists = localStorage.getItem(STORAGE_KEY);
             const savedFavorites = localStorage.getItem(FAVORITES_KEY);
+            const savedRecent = localStorage.getItem(RECENT_KEY);
 
             if (savedPlaylists) {
                 try {
@@ -42,6 +48,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
                     setFavorites(JSON.parse(savedFavorites));
                 } catch (e) {
                     console.error("Failed to parse favorites:", e);
+                }
+            }
+
+            if (savedRecent) {
+                try {
+                    setRecentlyPlayed(JSON.parse(savedRecent));
+                } catch (e) {
+                    console.error("Failed to parse recent:", e);
                 }
             }
         }
@@ -59,6 +73,12 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
         }
     }, [favorites]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem(RECENT_KEY, JSON.stringify(recentlyPlayed));
+        }
+    }, [recentlyPlayed]);
 
     const addPlaylist = useCallback((playlist: Playlist) => {
         setPlaylists((prev) => {
@@ -92,12 +112,23 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         return playlists.find((p) => p.id === id);
     }, [playlists]);
 
+    const addToRecentlyPlayed = useCallback((track: Track) => {
+        setRecentlyPlayed((prev) => {
+            // Remove if already exists (will be added to front)
+            const filtered = prev.filter((t) => t.id !== track.id);
+            // Add to front and limit to MAX_RECENT
+            return [track, ...filtered].slice(0, MAX_RECENT);
+        });
+    }, []);
+
     const clearAll = useCallback(() => {
         setPlaylists([]);
         setFavorites([]);
+        setRecentlyPlayed([]);
         if (typeof window !== "undefined") {
             localStorage.removeItem(STORAGE_KEY);
             localStorage.removeItem(FAVORITES_KEY);
+            localStorage.removeItem(RECENT_KEY);
         }
     }, []);
 
@@ -106,11 +137,13 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
             value={{
                 playlists,
                 favorites,
+                recentlyPlayed,
                 addPlaylist,
                 removePlaylist,
                 toggleFavorite,
                 isFavorite,
                 getPlaylist,
+                addToRecentlyPlayed,
                 clearAll,
             }}
         >

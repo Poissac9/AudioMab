@@ -1,21 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Music2, Heart, Clock, ChevronRight } from "lucide-react";
 import { useLibrary } from "@/context/LibraryContext";
-import { usePlayer } from "@/context/PlayerContext";
 import styles from "./page.module.css";
 
 export default function LibraryPage() {
-    const { playlists, favorites } = useLibrary();
-    const { playTrack } = usePlayer();
-
-    const handlePlayFavorites = () => {
-        if (favorites.length > 0) {
-            playTrack(favorites[0], favorites, 0);
-        }
-    };
+    const router = useRouter();
+    const { playlists, favorites, recentlyPlayed } = useLibrary();
 
     return (
         <main className={styles.page}>
@@ -25,7 +19,7 @@ export default function LibraryPage() {
             <section className={styles.quickAccess}>
                 <motion.div
                     className={styles.quickCard}
-                    onClick={handlePlayFavorites}
+                    onClick={() => router.push("/library/favorites")}
                     whileTap={{ scale: 0.98 }}
                 >
                     <div className={`${styles.quickIcon} ${styles.favorites}`}>
@@ -40,6 +34,7 @@ export default function LibraryPage() {
 
                 <motion.div
                     className={styles.quickCard}
+                    onClick={() => router.push("/library/recent")}
                     whileTap={{ scale: 0.98 }}
                 >
                     <div className={`${styles.quickIcon} ${styles.recent}`}>
@@ -47,7 +42,7 @@ export default function LibraryPage() {
                     </div>
                     <div className={styles.quickInfo}>
                         <h3 className={styles.quickTitle}>Recently Played</h3>
-                        <p className={styles.quickMeta}>Your history</p>
+                        <p className={styles.quickMeta}>{recentlyPlayed?.length || 0} songs</p>
                     </div>
                     <ChevronRight size={20} className={styles.quickArrow} />
                 </motion.div>

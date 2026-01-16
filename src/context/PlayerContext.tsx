@@ -346,16 +346,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-            // First get the audio URL
-            const response = await fetch(`/api/audio/${track.videoId}`);
-            if (!response.ok) throw new Error("Failed to fetch audio URL");
-            const data = await response.json();
-
-            if (!data.audioUrl) throw new Error("No audio URL returned");
-
-            // Fetch the actual audio data
-            const audioResponse = await fetch(data.audioUrl);
-            if (!audioResponse.ok) throw new Error("Failed to fetch audio data");
+            // Use the stream proxy endpoint to bypass CORS
+            const audioResponse = await fetch(`/api/stream/${track.videoId}`);
+            if (!audioResponse.ok) {
+                const errorData = await audioResponse.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to fetch audio stream");
+            }
 
             const audioBlob = await audioResponse.blob();
 
@@ -363,7 +359,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const cache = await caches.open(CACHE_NAME);
             const cacheResponse = new Response(audioBlob, {
                 headers: {
-                    "Content-Type": audioBlob.type,
+                    "Content-Type": audioBlob.type || "audio/webm",
                     "X-Track-Title": encodeURIComponent(track.title),
                     "X-Track-Artist": encodeURIComponent(track.artist),
                 },

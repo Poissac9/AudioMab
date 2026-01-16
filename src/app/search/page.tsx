@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search as SearchIcon, X, Loader2 } from "lucide-react";
@@ -35,11 +35,14 @@ export default function SearchPage() {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false); // Track if a search was performed
+    const [loadingId, setLoadingId] = useState<string | null>(null); // Track which item is loading
 
     const handleSearch = async (searchQuery: string) => {
         if (!searchQuery.trim()) return;
 
         setIsLoading(true);
+        setHasSearched(true);
 
         try {
             const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
@@ -70,6 +73,8 @@ export default function SearchPage() {
         const videoId = (result as unknown as { videoId?: string }).videoId || result.id;
         const url = `https://youtube.com/watch?v=${videoId}`;
 
+        setLoadingId(result.id); // Show loading on this item
+
         try {
             const response = await fetch("/api/import", {
                 method: "POST",
@@ -82,9 +87,11 @@ export default function SearchPage() {
                 router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
             } else {
                 console.error("Import error:", data.error);
+                setLoadingId(null);
             }
         } catch (error) {
             console.error("Import error:", error);
+            setLoadingId(null);
         }
     };
 
@@ -92,6 +99,7 @@ export default function SearchPage() {
         setQuery("");
         setResults([]);
         setIsSearching(false);
+        setHasSearched(false);
         inputRef.current?.blur();
     };
 
@@ -186,7 +194,8 @@ export default function SearchPage() {
                             </div>
                         )}
 
-                        {!isLoading && results.length === 0 && query && (
+                        {/* Only show "no results" after a search has been performed */}
+                        {!isLoading && hasSearched && results.length === 0 && (
                             <div className={styles.emptyState}>
                                 <p>No results found</p>
                             </div>
@@ -197,21 +206,26 @@ export default function SearchPage() {
                                 {results.map((result, i) => (
                                     <motion.div
                                         key={result.id}
-                                        className={styles.resultItem}
+                                        className={`${styles.resultItem} ${loadingId === result.id ? styles.loading : ""}`}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.02 }}
-                                        onClick={() => handleResultClick(result)}
+                                        onClick={() => !loadingId && handleResultClick(result)}
                                     >
                                         <div className={styles.resultArtwork}>
                                             <img src={result.thumbnail} alt={result.title} />
+                                            {loadingId === result.id && (
+                                                <div className={styles.resultLoading}>
+                                                    <Loader2 size={24} className={styles.spinner} />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className={styles.resultInfo}>
                                             <p className={`${styles.resultTitle} text-truncate`}>
                                                 {result.title}
                                             </p>
                                             <p className={`${styles.resultMeta} text-truncate`}>
-                                                {result.type === "playlist" ? "Playlist" : "Song"} • {result.author}
+                                                Song • {result.author}
                                             </p>
                                         </div>
                                     </motion.div>
@@ -219,7 +233,8 @@ export default function SearchPage() {
                             </div>
                         )}
 
-                        {!isLoading && results.length === 0 && !query && (
+                        {/* Show hint when just started searching (no search yet) */}
+                        {!isLoading && !hasSearched && (
                             <div className={styles.emptyState}>
                                 <p className={styles.emptyHint}>Search for songs, artists, or playlists</p>
                             </div>
