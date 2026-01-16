@@ -7,6 +7,7 @@ interface LibraryContextType {
     playlists: Playlist[];
     favorites: Track[];
     recentlyPlayed: Track[];
+    isLoaded: boolean; // Track if data has been loaded from localStorage
     addPlaylist: (playlist: Playlist) => void;
     removePlaylist: (id: string) => void;
     toggleFavorite: (track: Track) => void;
@@ -27,6 +28,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [favorites, setFavorites] = useState<Track[]>([]);
     const [recentlyPlayed, setRecentlyPlayed] = useState<Track[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     // Load from localStorage on mount
     useEffect(() => {
@@ -58,27 +60,30 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
                     console.error("Failed to parse recent:", e);
                 }
             }
+
+            // Mark as loaded after processing localStorage
+            setIsLoaded(true);
         }
     }, []);
 
     // Save to localStorage on changes
     useEffect(() => {
-        if (typeof window !== "undefined" && playlists.length > 0) {
+        if (typeof window !== "undefined" && isLoaded && playlists.length > 0) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
         }
-    }, [playlists]);
+    }, [playlists, isLoaded]);
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && isLoaded) {
             localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
         }
-    }, [favorites]);
+    }, [favorites, isLoaded]);
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && isLoaded) {
             localStorage.setItem(RECENT_KEY, JSON.stringify(recentlyPlayed));
         }
-    }, [recentlyPlayed]);
+    }, [recentlyPlayed, isLoaded]);
 
     const addPlaylist = useCallback((playlist: Playlist) => {
         setPlaylists((prev) => {
@@ -138,6 +143,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
                 playlists,
                 favorites,
                 recentlyPlayed,
+                isLoaded,
                 addPlaylist,
                 removePlaylist,
                 toggleFavorite,

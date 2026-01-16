@@ -19,9 +19,10 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { playTrack, toggleShuffle, downloadTrack, isTrackCached } = usePlayer();
-    const { getPlaylist, addPlaylist } = useLibrary();
+    const { getPlaylist, addPlaylist, isLoaded } = useLibrary();
 
     const [playlist, setPlaylist] = useState<Playlist | null>(null);
+    const [notFound, setNotFound] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [cachedTracks, setCachedTracks] = useState<Set<string>>(new Set());
@@ -55,13 +56,20 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
             }
         }
 
+        // Wait for library to load before checking
+        if (!isLoaded) return;
+
         // Try to get from library
         const savedPlaylist = getPlaylist(id);
         if (savedPlaylist) {
             setPlaylist(savedPlaylist);
             initialized.current = true;
+        } else {
+            // Playlist not found after library loaded
+            setNotFound(true);
         }
-    }, [id, searchParams]);
+    }, [id, searchParams, isLoaded, getPlaylist, addPlaylist, router]);
+
 
     // Check which tracks are cached
     useEffect(() => {
@@ -119,6 +127,29 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
 
     const allCached = playlist && cachedTracks.size === playlist.tracks.length;
 
+    // Show not found
+    if (notFound) {
+        return (
+            <main className={styles.page}>
+                <header className={styles.header}>
+                    <button className={styles.backButton} onClick={() => router.back()}>
+                        <ChevronLeft size={28} />
+                    </button>
+                </header>
+                <div className={styles.loading}>
+                    <p>Playlist not found</p>
+                    <button
+                        className={styles.backLink}
+                        onClick={() => router.push("/library")}
+                    >
+                        Go to Library
+                    </button>
+                </div>
+            </main>
+        );
+    }
+
+    // Show loading while library loads or playlist not yet set
     if (!playlist) {
         return (
             <main className={styles.page}>

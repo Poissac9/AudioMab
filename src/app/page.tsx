@@ -54,6 +54,10 @@ function HomeContent() {
         const data = await response.json();
 
         if (!response.ok) {
+          // Apple Music pages are JavaScript-rendered, show helpful message
+          if (response.status === 422 || data.hint) {
+            throw new Error("Apple Music playlists require JavaScript. Try searching for songs individually on YouTube instead.");
+          }
           throw new Error(data.error || "Failed to import");
         }
 
@@ -63,7 +67,7 @@ function HomeContent() {
             router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
           }, 1000);
         } else {
-          throw new Error("Could not match any songs. Try sharing individual songs instead.");
+          throw new Error("Could not match any songs. Try searching for songs on YouTube instead.");
         }
       } else {
         // YouTube import

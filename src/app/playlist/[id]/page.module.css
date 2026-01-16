@@ -194,3 +194,10 @@
         transform: rotate(360deg);
     }
 }
+
+.backLink {
+    margin-top: var(--space-sm);
+    color: var(--color-accent);
+    font-size: 15px;
+    font-weight: 500;
+}
