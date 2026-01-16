@@ -1,46 +1,93 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link2, ArrowRight, Music2, Settings, Trash2, X, Pencil } from "lucide-react";
+import { Link2, ArrowRight, Music2, Settings, X, Pencil, Loader2, Apple } from "lucide-react";
 import Link from "next/link";
 import { useLibrary } from "@/context/LibraryContext";
 import styles from "./page.module.css";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { playlists, removePlaylist } = useLibrary();
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
 
-  const handleImport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
+  // Handle shared URLs from PWA share target
+  useEffect(() => {
+    const sharedUrl = searchParams.get("share") || searchParams.get("import");
+    if (sharedUrl) {
+      setUrl(sharedUrl);
+      // Auto-import if it's a valid URL
+      if (sharedUrl.includes("youtube.com") || sharedUrl.includes("youtu.be") ||
+        sharedUrl.includes("music.apple.com")) {
+        handleImport(null, sharedUrl);
+      }
+    }
+  }, [searchParams]);
+
+  const handleImport = async (e: React.FormEvent | null, importUrl?: string) => {
+    if (e) e.preventDefault();
+    const targetUrl = importUrl || url;
+    if (!targetUrl.trim()) return;
 
     setIsLoading(true);
     setError("");
+    setImportStatus("Connecting...");
 
     try {
-      const response = await fetch("/api/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
+      // Check if it's an Apple Music link
+      if (targetUrl.includes("music.apple.com")) {
+        setImportStatus("Importing Apple Music playlist...");
 
-      const data = await response.json();
+        const response = await fetch("/api/apple-music", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: targetUrl }),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to import");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to import");
+        }
+
+        if (data.matchedSongs > 0) {
+          setImportStatus(`Found ${data.matchedSongs} of ${data.originalSongs} songs!`);
+          setTimeout(() => {
+            router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
+          }, 1000);
+        } else {
+          throw new Error("Could not match any songs. Try sharing individual songs instead.");
+        }
+      } else {
+        // YouTube import
+        setImportStatus("Importing from YouTube...");
+
+        const response = await fetch("/api/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: targetUrl }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to import");
+        }
+
+        router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
       }
-
-      router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to import");
     } finally {
       setIsLoading(false);
+      setImportStatus("");
     }
   };
 
@@ -49,6 +96,10 @@ export default function Home() {
       removePlaylist(id);
     }
   };
+
+  // Detect URL type for visual hint
+  const urlType = url.includes("music.apple.com") ? "apple" :
+    (url.includes("youtube.com") || url.includes("youtu.be")) ? "youtube" : null;
 
   // Sort by recently updated
   const recentPlaylists = [...playlists]
@@ -86,12 +137,16 @@ export default function Home() {
       <section className={styles.importSection}>
         <form onSubmit={handleImport} className={styles.importForm}>
           <div className={styles.inputWrapper}>
-            <Link2 size={20} className={styles.inputIcon} />
+            {urlType === "apple" ? (
+              <Apple size={20} className={styles.inputIcon} />
+            ) : (
+              <Link2 size={20} className={styles.inputIcon} />
+            )}
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="Paste YouTube URL..."
+              placeholder="Paste YouTube or Apple Music URL..."
               className={styles.input}
               disabled={isLoading}
             />
@@ -104,7 +159,7 @@ export default function Home() {
             whileTap={{ scale: 0.95 }}
           >
             {isLoading ? (
-              <div className={styles.loader} />
+              <Loader2 size={18} className={styles.spinner} />
             ) : (
               <>
                 Import
@@ -115,6 +170,16 @@ export default function Home() {
         </form>
 
         <AnimatePresence>
+          {importStatus && (
+            <motion.p
+              className={styles.status}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              {importStatus}
+            </motion.p>
+          )}
           {error && (
             <motion.p
               className={styles.error}
@@ -128,7 +193,7 @@ export default function Home() {
         </AnimatePresence>
 
         <p className={styles.hint}>
-          Paste a YouTube video or playlist link
+          Paste a YouTube video, playlist, or Apple Music playlist link
         </p>
       </section>
 
@@ -195,10 +260,24 @@ export default function Home() {
           </div>
           <h3 className={styles.emptyTitle}>No playlists yet</h3>
           <p className={styles.emptyText}>
-            Import your first playlist from YouTube to get started
+            Import your first playlist from YouTube or Apple Music
           </p>
         </section>
       )}
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <main className={styles.page}>
+        <div className={styles.loadingState}>
+          <Loader2 size={32} className={styles.spinner} />
+        </div>
+      </main>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search as SearchIcon, X, Loader2 } from "lucide-react";
+import { Search as SearchIcon, X, Loader2, Music, Disc } from "lucide-react";
+import { usePlayer } from "@/context/PlayerContext";
 import styles from "./page.module.css";
 
 interface SearchResult {
     id: string;
+    videoId?: string;
     title: string;
     author: string;
+    uploader?: string;
     thumbnail: string;
-    type: "video" | "playlist";
+    type?: "video" | "playlist";
     videoCount?: number;
     duration?: number;
 }
@@ -28,15 +31,49 @@ const CATEGORIES = [
     { id: "sleep", name: "Sleep", color: "#64D2FF", image: "https://i.ytimg.com/vi/lTRiuFIWV54/maxresdefault.jpg" },
 ];
 
+const SEARCH_STORAGE_KEY = "audiomab_search_state";
+
 export default function SearchPage() {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
+    const { playTrack } = usePlayer();
+
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [hasSearched, setHasSearched] = useState(false); // Track if a search was performed
-    const [loadingId, setLoadingId] = useState<string | null>(null); // Track which item is loading
+    const [hasSearched, setHasSearched] = useState(false);
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    // Restore search state from sessionStorage on mount
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = sessionStorage.getItem(SEARCH_STORAGE_KEY);
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    setQuery(state.query || "");
+                    setResults(state.results || []);
+                    setIsSearching(state.isSearching || false);
+                    setHasSearched(state.hasSearched || false);
+                } catch (e) {
+                    console.error("Failed to restore search state:", e);
+                }
+            }
+        }
+    }, []);
+
+    // Save search state to sessionStorage on changes
+    useEffect(() => {
+        if (typeof window !== "undefined" && hasSearched) {
+            sessionStorage.setItem(SEARCH_STORAGE_KEY, JSON.stringify({
+                query,
+                results,
+                isSearching,
+                hasSearched,
+            }));
+        }
+    }, [query, results, isSearching, hasSearched]);
 
     const handleSearch = async (searchQuery: string) => {
         if (!searchQuery.trim()) return;
@@ -68,31 +105,27 @@ export default function SearchPage() {
         handleSearch(category.name);
     };
 
+    // Play directly without navigating to playlist page
     const handleResultClick = async (result: SearchResult) => {
-        // Use videoId if available, otherwise use id
-        const videoId = (result as unknown as { videoId?: string }).videoId || result.id;
-        const url = `https://youtube.com/watch?v=${videoId}`;
+        const videoId = result.videoId || result.id;
 
-        setLoadingId(result.id); // Show loading on this item
+        // Create a track object and play directly
+        const track = {
+            id: videoId,
+            videoId: videoId,
+            title: result.title,
+            artist: result.author || result.uploader || "Unknown Artist",
+            thumbnail: result.thumbnail,
+            duration: result.duration || 0,
+        };
 
-        try {
-            const response = await fetch("/api/import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
-            });
+        setLoadingId(result.id);
 
-            const data = await response.json();
-            if (response.ok) {
-                router.push(`/playlist/${data.data.id}?data=${encodeURIComponent(JSON.stringify(data.data))}`);
-            } else {
-                console.error("Import error:", data.error);
-                setLoadingId(null);
-            }
-        } catch (error) {
-            console.error("Import error:", error);
-            setLoadingId(null);
-        }
+        // Play the track directly
+        playTrack(track, [track], 0);
+
+        // Clear loading after a short delay (player will handle the rest)
+        setTimeout(() => setLoadingId(null), 500);
     };
 
     const clearSearch = () => {
@@ -100,7 +133,16 @@ export default function SearchPage() {
         setResults([]);
         setIsSearching(false);
         setHasSearched(false);
+        sessionStorage.removeItem(SEARCH_STORAGE_KEY);
         inputRef.current?.blur();
+    };
+
+    // Format duration as MM:SS
+    const formatDuration = (seconds?: number) => {
+        if (!seconds) return "";
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
     return (
@@ -219,13 +261,22 @@ export default function SearchPage() {
                                                     <Loader2 size={24} className={styles.spinner} />
                                                 </div>
                                             )}
+                                            {/* Type indicator */}
+                                            <div className={styles.typeIndicator}>
+                                                {result.type === "playlist" ? (
+                                                    <Disc size={12} />
+                                                ) : (
+                                                    <Music size={12} />
+                                                )}
+                                            </div>
                                         </div>
                                         <div className={styles.resultInfo}>
                                             <p className={`${styles.resultTitle} text-truncate`}>
                                                 {result.title}
                                             </p>
                                             <p className={`${styles.resultMeta} text-truncate`}>
-                                                Song • {result.author}
+                                                {result.type === "playlist" ? "Album" : "Song"} • {result.author || result.uploader}
+                                                {result.duration ? ` • ${formatDuration(result.duration)}` : ""}
                                             </p>
                                         </div>
                                     </motion.div>

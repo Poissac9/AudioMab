@@ -162,6 +162,27 @@
   margin-bottom: var(--space-sm);
 }
 
+.status {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--color-accent);
+}
+
 .hint {
   font-size: 13px;
   color: var(--color-text-secondary);

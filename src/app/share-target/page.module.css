@@ -1,0 +1,46 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    background: var(--color-bg-primary);
+}
+
+.content {
+    text-align: center;
+}
+
+.iconWrapper {
+    margin-bottom: var(--space-lg);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+    color: var(--color-accent);
+}
+
+.success {
+    color: #32D74B;
+}
+
+.error {
+    color: #FF375F;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+}
+
+.message {
+    font-size: 16px;
+    color: var(--color-text-secondary);
+}

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import BottomNav from "@/components/BottomNav/BottomNav";
 import MiniPlayer from "@/components/MiniPlayer/MiniPlayer";
 import NowPlaying from "@/components/NowPlaying/NowPlaying";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "AudioMab",
@@ -67,6 +68,7 @@ export default function RootLayout({
               <MiniPlayer />
               <NowPlaying />
               <BottomNav />
+              <ServiceWorkerRegistration />
             </PlayerProvider>
           </LibraryProvider>
         </ThemeProvider>

@@ -64,7 +64,7 @@ export default function LibraryPage() {
                     </div>
                 ) : (
                     <div className={styles.playlistList}>
-                        {playlists.map((playlist, i) => (
+                        {[...playlists].reverse().map((playlist, i) => (
                             <motion.div
                                 key={playlist.id}
                                 initial={{ opacity: 0, y: 10 }}

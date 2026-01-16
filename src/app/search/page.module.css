@@ -223,3 +223,18 @@
     font-size: 14px;
     color: var(--color-text-secondary);
 }
+
+/* Type indicator (song/album) */
+.typeIndicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.9);
+}
