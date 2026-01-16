@@ -11,11 +11,20 @@
 </p>
 
 <p align="center">
+  <a href="https://audio-mab.vercel.app">
+    <img src="https://img.shields.io/badge/🎵_Live_Demo-audio--mab.vercel.app-FA2D48?style=for-the-badge" alt="Live Demo">
+  </a>
+</p>
+
+<p align="center">
   <a href="https://x.com/berlyoge">
     <img src="https://img.shields.io/twitter/follow/berlyoge?style=social" alt="Follow @berlyoge">
   </a>
-  <a href="https://github.com/Poissac9/AudioMab">
+  <a href="https://github.com/Poissac9/AudioMab/stargazers">
     <img src="https://img.shields.io/github/stars/Poissac9/AudioMab?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://github.com/Poissac9/AudioMab">
+    <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
   </a>
 </p>
 
