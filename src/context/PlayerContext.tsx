@@ -255,29 +255,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                // Fetch from API
-                const response = await fetch(`/api/audio/${videoId}`, {
-                    signal: abortControllerRef.current?.signal,
-                });
+                // Use stream endpoint directly to avoid 403 Forbidden (IP binding issues)
+                const streamUrl = `/api/stream/${videoId}`;
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Failed to fetch audio");
-                }
-
-                // Check if this is still the current track
-                if (currentVideoIdRef.current !== videoId) {
-                    console.log("Track changed, ignoring response for:", videoId);
-                    return;
-                }
-
-                if (audioRef.current && data.audioUrl) {
-                    audioUrlRef.current = data.audioUrl;
-                    audioRef.current.src = data.audioUrl;
+                if (audioRef.current && currentVideoIdRef.current === videoId) {
+                    audioUrlRef.current = streamUrl;
+                    audioRef.current.src = streamUrl;
                     audioRef.current.load();
-                } else {
-                    throw new Error("No audio URL in response");
                 }
             } catch (error) {
                 if ((error as Error).name === "AbortError") {

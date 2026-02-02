@@ -22,7 +22,7 @@ export async function GET(
                 const response = await fetch(
                     `${YTDLP_API_URL}/stream/${videoId}`,
                     {
-                        signal: AbortSignal.timeout(120000), // 2 min timeout for streaming
+                        signal: AbortSignal.timeout(1200000), // 20 min timeout for streaming
                     }
                 );
 

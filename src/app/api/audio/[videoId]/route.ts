@@ -21,7 +21,9 @@ export async function GET(
             try {
                 const response = await fetch(
                     `${YTDLP_API_URL}/audio/${videoId}`,
-                    { signal: AbortSignal.timeout(30000) }
+                    {
+                        signal: AbortSignal.timeout(1200000), // 20 min timeout for streaming
+                    }
                 );
 
                 if (response.ok) {
