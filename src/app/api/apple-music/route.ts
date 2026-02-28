@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const YTDLP_API_URL = process.env.YTDLP_API_URL;
+import { runYtdlp } from "@/services/ytdlp";
 
 interface Song {
     title: string;
@@ -101,33 +100,36 @@ export async function POST(request: NextRequest) {
         }
 
         // Search for each song on YouTube using our backend
-        if (!YTDLP_API_URL) {
-            return NextResponse.json(
-                { error: "Backend not configured" },
-                { status: 503 }
-            );
-        }
-
         const tracks = [];
         for (const song of songs.slice(0, 50)) { // Limit to 50 songs
             try {
                 const searchQuery = `${song.title} ${song.artist}`;
-                const searchResponse = await fetch(
-                    `${YTDLP_API_URL}/search?q=${encodeURIComponent(searchQuery)}&limit=1`
-                );
 
-                if (searchResponse.ok) {
-                    const searchData = await searchResponse.json();
-                    if (searchData.results && searchData.results.length > 0) {
-                        const result = searchData.results[0];
-                        tracks.push({
-                            id: result.id,
-                            videoId: result.id,
-                            title: song.title,
-                            artist: song.artist,
-                            thumbnail: result.thumbnail || `https://i.ytimg.com/vi/${result.id}/mqdefault.jpg`,
-                            duration: result.duration || 0,
-                        });
+                const args = [
+                    `ytsearch1:${searchQuery}`,
+                    '--dump-json',
+                    '--flat-playlist',
+                    '--no-warnings',
+                ];
+
+                const output = await runYtdlp(args);
+
+                const lines = output.trim().split('\n').filter((line: string) => line);
+                if (lines.length > 0) {
+                    try {
+                        const result = JSON.parse(lines[0]);
+                        if (result.id && result.id.length === 11) {
+                            tracks.push({
+                                id: result.id,
+                                videoId: result.id,
+                                title: song.title,
+                                artist: song.artist,
+                                thumbnail: result.thumbnails?.[0]?.url || `https://i.ytimg.com/vi/${result.id}/mqdefault.jpg`,
+                                duration: result.duration || 0,
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse search result for:", song.title);
                     }
                 }
             } catch (e) {

@@ -67,19 +67,18 @@ This project uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to extract audio fr
 
 - Node.js 18+ 
 - npm or yarn
-- A [Railway](https://railway.app) account (for backend deployment)
-- A [Vercel](https://vercel.com) account (for frontend deployment)
+- Python 3 and yt-dlp (for local backend testing)
+- A server to deploy to (e.g., Netcup + Coolify)
 
 ### Project Structure
 
 ```
 AudioMab/
-├── src/                    # Next.js frontend
-│   ├── app/               # App router pages
+├── src/                    # Next.js unified full-stack app
+│   ├── app/               # App router pages & API Routes
 │   ├── components/        # React components
 │   └── context/           # React context providers
 ├── public/                 # Static assets
-├── ytdlp-api/             # Backend API (deploy separately)
 └── ...
 ```
 
@@ -96,18 +95,11 @@ AudioMab/
    npm install
    ```
 
-3. **Set up the backend**
-   
-   See [ytdlp-api/README.md](./ytdlp-api/README.md) for backend setup instructions.
+3. **Native Backend Setup**
+   The application now includes the former yt-dlp backend directly in the Next.js API routes! 
+   Make sure you have `yt-dlp` installed on your machine so the local API can execute it.
 
-4. **Configure environment variables**
-   
-   Create a `.env.local` file:
-   ```env
-   YTDLP_API_URL=http://localhost:3001
-   ```
-
-5. **Run the development server**
+4. **Run the development server**
    ```bash
    npm run dev
    ```
@@ -118,38 +110,23 @@ AudioMab/
 
 ---
 
-## 🌐 Deployment
+## 🌐 Deployment (Coolify)
 
-### Frontend (Vercel)
+The project is now a unified Next.js application with a multi-stage Dockerfile that installs `yt-dlp` natively alongside your frontend.
 
 1. Push your code to GitHub
-2. Connect your repository to [Vercel](https://vercel.com)
-3. Add environment variable:
-   - `YTDLP_API_URL` = Your Railway backend URL
-4. Deploy!
-
-### Backend (Railway)
-
-See [ytdlp-api/README.md](./ytdlp-api/README.md) for detailed backend deployment instructions.
+2. In your Coolify dashboard, create a new resource from your GitHub repository.
+3. Select Dockerfile-based deployment (Coolify will detect the `Dockerfile` in the root).
+4. Deploy! Next.js and the yt-dlp API routes run seamlessly together on port 3000.
 
 ---
 
-## 🛠️ Tech Stack
-
-**Frontend:**
-- [Next.js 14](https://nextjs.org/) - React framework
+**Tech Stack:**
+- [Next.js 14](https://nextjs.org/) - React framework & API Routes
 - [Framer Motion](https://www.framer.com/motion/) - Animations
 - [Lucide React](https://lucide.dev/) - Icons
-- TypeScript
-
-**Backend:**
-- [Express.js](https://expressjs.com/) - API server
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube extraction
-- Docker
-
-**Deployment:**
-- [Vercel](https://vercel.com/) - Frontend hosting
-- [Railway](https://railway.app/) - Backend hosting
+- Docker - Deployment containerization
 
 ---
 

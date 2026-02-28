@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const YTDLP_API_URL = process.env.YTDLP_API_URL;
+import { runYtdlp } from "@/services/ytdlp";
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,51 +12,96 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Use external yt-dlp API (Railway backend)
-        if (YTDLP_API_URL) {
-            try {
-                const response = await fetch(`${YTDLP_API_URL}/import`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ url }),
-                    signal: AbortSignal.timeout(60000), // Longer timeout for playlists
-                });
+        // Check if it's a playlist
+        const isPlaylist = url.includes('list=');
 
-                if (response.ok) {
-                    const result = await response.json();
-                    return NextResponse.json({
-                        data: result.data,
-                        source: "external-ytdlp"
-                    });
-                } else {
-                    const error = await response.json().catch(() => ({}));
-                    console.error("External yt-dlp API error:", error);
-                    return NextResponse.json(
-                        { error: error.error || "Failed to import from backend" },
-                        { status: response.status }
-                    );
+        if (isPlaylist) {
+            // Get playlist info
+            const args = [
+                url,
+                '--dump-json',
+                '--flat-playlist',
+                '--no-warnings',
+            ];
+
+            const output = await runYtdlp(args);
+            const lines = output.trim().split('\n').filter(line => line);
+
+            // First line is playlist info, rest are videos
+            const tracks = lines.map(line => {
+                try {
+                    const data = JSON.parse(line);
+                    return {
+                        id: data.id,
+                        videoId: data.id,
+                        title: data.title,
+                        artist: data.uploader || data.channel || 'Unknown',
+                        duration: data.duration || 0,
+                        thumbnail: data.thumbnails?.[0]?.url ||
+                            `https://i.ytimg.com/vi/${data.id}/mqdefault.jpg`,
+                    };
+                } catch {
+                    return null;
                 }
-            } catch (error) {
-                console.error("External yt-dlp API failed:", error);
-                return NextResponse.json(
-                    { error: "Backend request timed out or failed" },
-                    { status: 504 }
-                );
-            }
-        }
+            }).filter(Boolean);
 
-        // No backend available
-        return NextResponse.json(
-            {
-                error: "No import backend configured. Please set YTDLP_API_URL environment variable.",
-                help: "Deploy the ytdlp-api backend to Railway and add the URL to Vercel environment variables."
-            },
-            { status: 503 }
-        );
-    } catch (error) {
+            // Get playlist metadata
+            const playlistArgs = [
+                url,
+                '--dump-single-json',
+                '--flat-playlist',
+                '--no-warnings',
+            ];
+
+            const playlistOutput = await runYtdlp(playlistArgs);
+            const playlistData = JSON.parse(playlistOutput);
+
+            return NextResponse.json({
+                data: {
+                    id: playlistData.id,
+                    title: playlistData.title,
+                    author: playlistData.uploader || playlistData.channel,
+                    thumbnail: playlistData.thumbnails?.[0]?.url ||
+                        tracks[0]?.thumbnail,
+                    tracks,
+                },
+                source: 'yt-dlp',
+            });
+        } else {
+            // Single video
+            const args = [
+                url,
+                '--dump-json',
+                '--no-warnings',
+            ];
+
+            const output = await runYtdlp(args);
+            const data = JSON.parse(output);
+
+            return NextResponse.json({
+                data: {
+                    id: data.id,
+                    title: data.title,
+                    author: data.uploader || data.channel,
+                    thumbnail: data.thumbnail ||
+                        `https://i.ytimg.com/vi/${data.id}/mqdefault.jpg`,
+                    tracks: [{
+                        id: data.id,
+                        videoId: data.id,
+                        title: data.title,
+                        artist: data.uploader || data.channel,
+                        duration: data.duration,
+                        thumbnail: data.thumbnail ||
+                            `https://i.ytimg.com/vi/${data.id}/mqdefault.jpg`,
+                    }],
+                },
+                source: 'yt-dlp',
+            });
+        }
+    } catch (error: any) {
         console.error("Import error:", error);
         return NextResponse.json(
-            { error: "Failed to process URL" },
+            { error: error.message || "Failed to process URL" },
             { status: 500 }
         );
     }
