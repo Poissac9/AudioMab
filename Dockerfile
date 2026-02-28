@@ -32,7 +32,7 @@ RUN npm run build
 
 # 4. Runner stage (Production ready)
 FROM base AS runner
-NODE_ENV production
+ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
