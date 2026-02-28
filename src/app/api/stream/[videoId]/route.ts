@@ -22,6 +22,7 @@ export async function GET(
             '--dump-json',
             '-f', 'bestaudio[ext=m4a]/bestaudio',
             '--no-warnings',
+            '--extractor-args', 'youtube:player_client=default,ios',
         ];
 
         let output;

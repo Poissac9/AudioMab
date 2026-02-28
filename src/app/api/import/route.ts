@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
                 '--dump-json',
                 '--flat-playlist',
                 '--no-warnings',
+                '--extractor-args', 'youtube:player_client=default,ios',
             ];
 
             const output = await runYtdlp(args);
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
                 '--dump-single-json',
                 '--flat-playlist',
                 '--no-warnings',
+                '--extractor-args', 'youtube:player_client=default,ios',
             ];
 
             const playlistOutput = await runYtdlp(playlistArgs);
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
                 url,
                 '--dump-json',
                 '--no-warnings',
+                '--extractor-args', 'youtube:player_client=default,ios',
             ];
 
             const output = await runYtdlp(args);

@@ -20,6 +20,7 @@ export async function GET(
             '--dump-json',
             '-f', 'bestaudio',
             '--no-warnings',
+            '--extractor-args', 'youtube:player_client=default,ios',
         ];
 
         const output = await runYtdlp(args);

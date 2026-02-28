@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
             '--dump-json',
             '--flat-playlist',
             '--no-warnings',
+            '--extractor-args', 'youtube:player_client=default,ios',
         ];
 
         const output = await runYtdlp(args);
